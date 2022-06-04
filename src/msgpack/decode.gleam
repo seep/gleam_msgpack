@@ -2,7 +2,7 @@ import gleam/list
 import gleam/bit_string
 import msgpack/types.{
   PackedArray, PackedBinary, PackedBool, PackedExt, PackedFloat, PackedInt, PackedMap,
-  PackedMapEntry, PackedNil, PackedString, PackedValue,
+  PackedMapEntry, PackedNil, PackedString, PackedUnused, PackedValue,
 }
 
 pub fn decode(data: BitString) -> List(PackedValue) {
@@ -26,7 +26,7 @@ pub fn decode(data: BitString) -> List(PackedValue) {
     <<0xc0, rest:binary>> -> [PackedNil, ..decode(rest)]
 
     // never used
-    <<0xc1, rest:binary>> -> decode(rest)
+    <<0xc1, rest:binary>> -> [PackedUnused, ..decode(rest)]
 
     // bool
     <<0xc2, rest:binary>> -> [PackedBool(False), ..decode(rest)]
@@ -81,11 +81,6 @@ pub fn decode(data: BitString) -> List(PackedValue) {
     // negative fixint
     <<0b111:3, value:5, rest:binary>> -> [PackedInt(0 - value), ..decode(rest)]
   }
-}
-
-pub fn decode_single(data: BitString) -> PackedValue {
-  assert Ok(value) = list.first(decode(data))
-  value
 }
 
 fn decode_int(data: BitString, length: Int) -> List(PackedValue) {

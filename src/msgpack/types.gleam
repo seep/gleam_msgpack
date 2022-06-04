@@ -1,12 +1,12 @@
 import gleam/map
 
-pub const min_positive_fixint = 0
+pub const min_pos_fixint = 0
 
-pub const max_positive_fixint = 127
+pub const max_pos_fixint = 127
 
-pub const min_negative_fixint = -32
+pub const min_neg_fixint = -32
 
-pub const max_negative_fixint = -1
+pub const max_neg_fixint = -1
 
 pub const min_uint8 = 0
 
@@ -80,8 +80,15 @@ pub const min_arr32_len = 65536
 
 pub const max_arr32_len = 4294967295
 
+pub const max_fixmap_len = 15
+
+pub const max_map16_len = 65535
+
+pub const max_map32_len = 4294967295
+
 pub type PackedValue {
   PackedNil
+  PackedUnused
   PackedInt(Int)
   PackedBool(Bool)
   PackedFloat(Float)

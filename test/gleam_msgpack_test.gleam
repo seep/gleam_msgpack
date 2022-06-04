@@ -2,9 +2,10 @@ import gleeunit
 import gleeunit/should
 import gleam/string
 import gleam/list
+import gleam/result
 import gleam/bit_string
-import msgpack/encode.{encode_single}
-import msgpack/decode.{decode_single}
+import msgpack/encode.{encode}
+import msgpack/decode.{decode}
 import msgpack/types.{
   PackedArray, PackedBinary, PackedBool, PackedExt, PackedFloat, PackedInt, PackedMap,
   PackedMapEntry, PackedNil, PackedString, PackedValue, max_arr16_len, max_bin16_len,
@@ -17,6 +18,15 @@ import msgpack/types.{
 
 pub fn main() {
   gleeunit.main()
+}
+
+fn decode_single(data: BitString) -> PackedValue {
+  let [value, ..rest] = decode(data)
+  value
+}
+
+fn encode_single(value: PackedValue) -> BitString {
+  encode([value])
 }
 
 pub fn encode_int_test() {
