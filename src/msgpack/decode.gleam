@@ -11,18 +11,6 @@ pub fn decode(data: BitString) -> List(PackedValue) {
     // empty
     <<>> -> []
 
-    // positive fixint
-    <<0b0:1, value:7, rest:binary>> -> [PackedInt(value), ..decode(rest)]
-
-    // fixmap
-    <<0b1000:4, count:4, rest:binary>> -> decode_map(rest, count)
-
-    // fixarr
-    <<0b1001:4, count:4, rest:binary>> -> decode_array(rest, count)
-
-    // fixstr
-    <<0b101:3, length:5, rest:binary>> -> decode_string(rest, length)
-
     // nil
     <<0xc0, rest:binary>> -> [PackedNil, ..decode(rest)]
 
@@ -33,19 +21,11 @@ pub fn decode(data: BitString) -> List(PackedValue) {
     <<0xc2, rest:binary>> -> [PackedBool(False), ..decode(rest)]
     <<0xc3, rest:binary>> -> [PackedBool(True), ..decode(rest)]
 
-    // bin
-    <<0xc4, length:8, rest:binary>> -> decode_binary(rest, length)
-    <<0xc5, length:16, rest:binary>> -> decode_binary(rest, length)
-    <<0xc6, length:32, rest:binary>> -> decode_binary(rest, length)
+    // positive fixint
+    <<0b0:1, n:7, rest:binary>> -> [PackedInt(n), ..decode(rest)]
 
-    // ext
-    <<0xc7, length:8, rest:binary>> -> decode_ext(rest, length)
-    <<0xc8, length:16, rest:binary>> -> decode_ext(rest, length)
-    <<0xc9, length:32, rest:binary>> -> decode_ext(rest, length)
-
-    // float
-    <<0xca, _value:32, _rest:binary>> -> todo("parse single precision floats")
-    <<0xcb, value:float, rest:binary>> -> [PackedFloat(value), ..decode(rest)]
+    // negative fixint
+    <<0b111:3, n:5, rest:binary>> -> [PackedInt(int.negate(n)), ..decode(rest)]
 
     // uint
     <<0xcc, rest:binary>> -> decode_uint(rest, 8)
@@ -59,6 +39,37 @@ pub fn decode(data: BitString) -> List(PackedValue) {
     <<0xd2, rest:binary>> -> decode_int(rest, 32)
     <<0xd3, rest:binary>> -> decode_int(rest, 64)
 
+    // float
+    <<0xca, _n:32, _rest:binary>> -> todo("parse single precision floats")
+    <<0xcb, n:float, rest:binary>> -> [PackedFloat(n), ..decode(rest)]
+
+    // bin
+    <<0xc4, len:8, rest:binary>> -> decode_binary(rest, len)
+    <<0xc5, len:16, rest:binary>> -> decode_binary(rest, len)
+    <<0xc6, len:32, rest:binary>> -> decode_binary(rest, len)
+
+    // fixstr
+    <<0b101:3, len:5, rest:binary>> -> decode_string(rest, len)
+
+    // str
+    <<0xd9, len:8, rest:binary>> -> decode_string(rest, len)
+    <<0xda, len:16, rest:binary>> -> decode_string(rest, len)
+    <<0xdb, len:32, rest:binary>> -> decode_string(rest, len)
+
+    // fixarr
+    <<0b1001:4, count:4, rest:binary>> -> decode_array(rest, count)
+
+    // arr
+    <<0xdc, count:16, rest:binary>> -> decode_array(rest, count)
+    <<0xdd, count:32, rest:binary>> -> decode_array(rest, count)
+
+    // fixmap
+    <<0b1000:4, count:4, rest:binary>> -> decode_map(rest, count)
+
+    // map
+    <<0xde, count:16, rest:binary>> -> decode_map(rest, count)
+    <<0xdf, count:32, rest:binary>> -> decode_map(rest, count)
+
     // fixext
     <<0xd4, rest:binary>> -> decode_ext(rest, 8)
     <<0xd5, rest:binary>> -> decode_ext(rest, 16)
@@ -66,24 +77,10 @@ pub fn decode(data: BitString) -> List(PackedValue) {
     <<0xd7, rest:binary>> -> decode_ext(rest, 64)
     <<0xd8, rest:binary>> -> decode_ext(rest, 128)
 
-    // str
-    <<0xd9, length:8, rest:binary>> -> decode_string(rest, length)
-    <<0xda, length:16, rest:binary>> -> decode_string(rest, length)
-    <<0xdb, length:32, rest:binary>> -> decode_string(rest, length)
-
-    // arr
-    <<0xdc, count:16, rest:binary>> -> decode_array(rest, count)
-    <<0xdd, count:32, rest:binary>> -> decode_array(rest, count)
-
-    // map
-    <<0xde, count:16, rest:binary>> -> decode_map(rest, count)
-    <<0xdf, count:32, rest:binary>> -> decode_map(rest, count)
-
-    // negative fixint
-    <<0b111:3, value:5, rest:binary>> -> [
-      PackedInt(int.negate(value)),
-      ..decode(rest)
-    ]
+    // ext
+    <<0xc7, len:8, rest:binary>> -> decode_ext(rest, len)
+    <<0xc8, len:16, rest:binary>> -> decode_ext(rest, len)
+    <<0xc9, len:32, rest:binary>> -> decode_ext(rest, len)
   }
 }
 
