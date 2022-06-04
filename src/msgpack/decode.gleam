@@ -3,7 +3,7 @@ import gleam/int
 import gleam/bit_string
 import msgpack/types.{
   PackedArray, PackedBinary, PackedBool, PackedExt, PackedFloat, PackedInt, PackedMap,
-  PackedMapEntry, PackedNil, PackedString, PackedUnused, PackedValue,
+  PackedMapEntry, PackedNil, PackedString, PackedValue,
 }
 
 pub type DecodeError {
@@ -26,10 +26,7 @@ pub fn decode(data: BitString) -> DecodeResult {
     }
 
     // never used
-    <<0xc1, rest:binary>> -> {
-      try rest = decode(rest)
-      Ok([PackedUnused, ..rest])
-    }
+    <<0xc1, _rest:binary>> -> Error(BadSegmentHeader)
 
     // bool
     <<0xc2, rest:binary>> -> {
@@ -139,7 +136,7 @@ fn decode_string(data: BitString, length: Int) -> DecodeResult {
 
   case bit_string.to_string(value) {
     Ok(str) -> Ok([PackedString(str), ..rest])
-    Error(e) -> Error(BadSegmentContents)
+    Error(_) -> Error(BadSegmentContents)
   }
 }
 

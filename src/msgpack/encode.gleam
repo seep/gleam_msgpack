@@ -5,11 +5,11 @@ import gleam/bit_string
 import gleam/bit_builder.{BitBuilder}
 import msgpack/types.{
   PackedArray, PackedBinary, PackedBool, PackedExt, PackedFloat, PackedInt, PackedMap,
-  PackedMapEntry, PackedNil, PackedString, PackedUnused, PackedValue, max_arr16_len,
-  max_arr32_len, max_fixarr_len, max_fixmap_len, max_fixstr_len, max_int16, max_int32,
-  max_int64, max_int8, max_map16_len, max_map32_len, max_pos_fixint, max_str16_len,
-  max_str32_len, max_str8_len, max_uint16, max_uint32, max_uint64, max_uint8, min_int16,
-  min_int32, min_int64, min_int8, min_neg_fixint,
+  PackedMapEntry, PackedNil, PackedString, PackedValue, max_arr16_len, max_arr32_len,
+  max_fixarr_len, max_fixmap_len, max_fixstr_len, max_int16, max_int32, max_int64,
+  max_int8, max_map16_len, max_map32_len, max_pos_fixint, max_str16_len, max_str32_len,
+  max_str8_len, max_uint16, max_uint32, max_uint64, max_uint8, min_int16, min_int32,
+  min_int64, min_int8, min_neg_fixint,
 }
 
 pub fn encode(values: List(PackedValue)) -> BitString {
@@ -23,10 +23,6 @@ fn encode_value(into: BitBuilder, value: PackedValue) -> BitBuilder {
     PackedNil ->
       into
       |> bit_builder.append(<<0xc0>>)
-
-    PackedUnused ->
-      into
-      |> bit_builder.append(<<0xc1>>)
 
     PackedBool(False) ->
       into

@@ -1,5 +1,3 @@
-import gleam/map
-
 pub const min_pos_fixint = 0
 
 pub const max_pos_fixint = 127
@@ -88,7 +86,6 @@ pub const max_map32_len = 4294967295
 
 pub type PackedValue {
   PackedNil
-  PackedUnused
   PackedInt(Int)
   PackedBool(Bool)
   PackedFloat(Float)
