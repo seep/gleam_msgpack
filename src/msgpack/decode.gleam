@@ -1,4 +1,5 @@
 import gleam/list
+import gleam/int
 import gleam/bit_string
 import msgpack/types.{
   PackedArray, PackedBinary, PackedBool, PackedExt, PackedFloat, PackedInt, PackedMap,
@@ -79,7 +80,10 @@ pub fn decode(data: BitString) -> List(PackedValue) {
     <<0xdf, count:32, rest:binary>> -> decode_map(rest, count)
 
     // negative fixint
-    <<0b111:3, value:5, rest:binary>> -> [PackedInt(0 - value), ..decode(rest)]
+    <<0b111:3, value:5, rest:binary>> -> [
+      PackedInt(int.negate(value)),
+      ..decode(rest)
+    ]
   }
 }
 
