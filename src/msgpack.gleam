@@ -3,10 +3,6 @@ import msgpack/encode.{encode}
 import msgpack/decode.{decode}
 import msgpack/types.{PackedValue}
 
-pub fn main() {
-  io.println("Hello from try_gleam!")
-}
-
 pub fn pack(message: List(PackedValue)) -> Result(BitString, Nil) {
   Ok(encode(message))
 }

@@ -1,9 +1,9 @@
-# try_gleam
+# gleam_msgpack
 
-[![Package Version](https://img.shields.io/hexpm/v/try_gleam)](https://hex.pm/packages/try_gleam)
-[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/try_gleam/)
+[![Package Version](https://img.shields.io/hexpm/v/gleam_msgpack)](https://hex.pm/packages/gleam_msgpack)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/gleam_msgpack/)
 
-A Gleam project
+MessagePack protocol in pure Gleam
 
 ## Quick start
 
@@ -18,7 +18,7 @@ gleam shell # Run an Erlang shell
 If available on Hex this package can be added to your Gleam project:
 
 ```sh
-gleam add try_gleam
+gleam add gleam_msgpack
 ```
 
-and its documentation can be found at <https://hexdocs.pm/try_gleam>.
+and its documentation can be found at <https://hexdocs.pm/gleam_msgpack>.
