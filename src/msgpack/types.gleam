@@ -1,7 +1,5 @@
 import gleam/map
 
-// fixint
-
 pub const min_positive_fixint = 0
 
 pub const max_positive_fixint = 127
@@ -9,8 +7,6 @@ pub const max_positive_fixint = 127
 pub const min_negative_fixint = -32
 
 pub const max_negative_fixint = -1
-
-// uint
 
 pub const min_uint8 = 0
 
@@ -28,8 +24,6 @@ pub const min_uint64 = 4294967296
 
 pub const max_uint64 = 18446744073709551615
 
-// int
-
 pub const min_int8 = -128
 
 pub const max_int8 = 127
@@ -45,8 +39,6 @@ pub const max_int32 = 2147483647
 pub const min_int64 = -9223372036854775808
 
 pub const max_int64 = 9223372036854775807
-
-// str
 
 pub const min_fixstr_len = 0
 
@@ -64,8 +56,6 @@ pub const min_str32_len = 65536
 
 pub const max_str32_len = 4294967295
 
-// bin
-
 pub const min_bin8_len = 0
 
 pub const max_bin8_len = 255
@@ -77,8 +67,6 @@ pub const max_bin16_len = 65535
 pub const min_bin32_len = 65536
 
 pub const max_bin32_len = 4294967295
-
-// arr
 
 pub const min_fixarr_len = 0
 

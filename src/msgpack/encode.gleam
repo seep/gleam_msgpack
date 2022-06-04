@@ -1,6 +1,7 @@
 import gleam/list
 import gleam/string
 import gleam/bit_string
+import gleam/bit_builder.{BitBuilder}
 import msgpack/types.{
   PackedArray, PackedBinary, PackedBool, PackedExt, PackedFloat, PackedInt, PackedMap,
   PackedMapEntry, PackedNil, PackedString, PackedValue, max_arr16_len, max_arr32_len,
@@ -11,24 +12,36 @@ import msgpack/types.{
 
 pub fn encode(values: List(PackedValue)) -> BitString {
   values
-  |> list.map(encode_single)
-  |> bit_string.concat
+  |> list.map(fn(v) { encode_value(v, bit_builder.new()) })
+  |> bit_builder.concat()
+  |> bit_builder.to_bit_string()
 }
 
 pub fn encode_single(value: PackedValue) -> BitString {
+  bit_builder.new()
+  |> encode_value(value, _)
+  |> bit_builder.to_bit_string()
+}
+
+fn encode_value(value: PackedValue, into: BitBuilder) -> BitBuilder {
   case value {
     PackedNil -> <<0xc0>>
-    PackedBool(False) -> <<0xc2>>
-    PackedBool(True) -> <<0xc3>>
-    PackedInt(data) -> <<encode_int(data):bit_string>>
-    PackedFloat(data) -> <<encode_float(data):bit_string>>
-    PackedString(data) -> <<encode_string(data):bit_string>>
-    PackedBinary(data) -> <<encode_binary(data):bit_string>>
-    PackedArray(data) -> <<encode_array(data):bit_string>>
-    PackedMap(data) -> <<encode_map(data):bit_string>>
-    PackedExt(ext_type, ext_data) -> <<
-      encode_ext(ext_type, ext_data):bit_string,
-    >>
+    PackedBool(data) -> encode_bool(data)
+    PackedInt(data) -> encode_int(data)
+    PackedFloat(data) -> encode_float(data)
+    PackedString(data) -> encode_string(data)
+    PackedBinary(data) -> encode_binary(data)
+    PackedArray(data) -> encode_array(data)
+    PackedMap(data) -> encode_map(data)
+    PackedExt(ext_type, ext_data) -> encode_ext(ext_type, ext_data)
+  }
+  |> bit_builder.append(into, _)
+}
+
+fn encode_bool(value: Bool) -> BitString {
+  case value {
+    False -> <<0xc2>>
+    True -> <<0xc3>>
   }
 }
 
