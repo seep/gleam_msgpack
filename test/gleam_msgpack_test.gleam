@@ -21,7 +21,8 @@ pub fn main() {
 }
 
 fn decode_single(data: BitString) -> PackedValue {
-  let [value, ..rest] = decode(data)
+  assert Ok(values) = decode(data)
+  assert Ok(value) = list.first(values)
   value
 }
 

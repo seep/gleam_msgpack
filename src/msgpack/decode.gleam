@@ -6,26 +6,53 @@ import msgpack/types.{
   PackedMapEntry, PackedNil, PackedString, PackedUnused, PackedValue,
 }
 
-pub fn decode(data: BitString) -> List(PackedValue) {
+pub type DecodeError {
+  BadSegmentHeader
+  BadSegmentContents
+}
+
+type DecodeResult =
+  Result(List(PackedValue), DecodeError)
+
+pub fn decode(data: BitString) -> DecodeResult {
   case data {
     // empty
-    <<>> -> []
+    <<>> -> Ok([])
 
     // nil
-    <<0xc0, rest:binary>> -> [PackedNil, ..decode(rest)]
+    <<0xc0, rest:binary>> -> {
+      try rest = decode(rest)
+      Ok([PackedNil, ..rest])
+    }
 
     // never used
-    <<0xc1, rest:binary>> -> [PackedUnused, ..decode(rest)]
+    <<0xc1, rest:binary>> -> {
+      try rest = decode(rest)
+      Ok([PackedUnused, ..rest])
+    }
 
     // bool
-    <<0xc2, rest:binary>> -> [PackedBool(False), ..decode(rest)]
-    <<0xc3, rest:binary>> -> [PackedBool(True), ..decode(rest)]
+    <<0xc2, rest:binary>> -> {
+      try rest = decode(rest)
+      Ok([PackedBool(False), ..rest])
+    }
+
+    <<0xc3, rest:binary>> -> {
+      try rest = decode(rest)
+      Ok([PackedBool(True), ..rest])
+    }
 
     // positive fixint
-    <<0b0:1, n:7, rest:binary>> -> [PackedInt(n), ..decode(rest)]
+    <<0b0:1, n:7, rest:binary>> -> {
+      try rest = decode(rest)
+      Ok([PackedInt(n), ..rest])
+    }
 
     // negative fixint
-    <<0b111:3, n:5, rest:binary>> -> [PackedInt(int.negate(n)), ..decode(rest)]
+    <<0b111:3, n:5, rest:binary>> -> {
+      try rest = decode(rest)
+      Ok([PackedInt(int.negate(n)), ..rest])
+    }
 
     // uint
     <<0xcc, rest:binary>> -> decode_uint(rest, 8)
@@ -40,21 +67,29 @@ pub fn decode(data: BitString) -> List(PackedValue) {
     <<0xd3, rest:binary>> -> decode_int(rest, 64)
 
     // float
-    <<0xca, _n:32, _rest:binary>> -> todo("parse single precision floats")
-    <<0xcb, n:float, rest:binary>> -> [PackedFloat(n), ..decode(rest)]
+    <<0xca, _n:32, rest:binary>> -> {
+      todo("parse single precision floats")
+      try rest = decode(rest)
+      Ok([PackedFloat(0.0), ..rest])
+    }
+
+    <<0xcb, n:float, rest:binary>> -> {
+      try rest = decode(rest)
+      Ok([PackedFloat(n), ..rest])
+    }
 
     // bin
-    <<0xc4, len:8, rest:binary>> -> decode_binary(rest, len)
-    <<0xc5, len:16, rest:binary>> -> decode_binary(rest, len)
-    <<0xc6, len:32, rest:binary>> -> decode_binary(rest, len)
+    <<0xc4, length:8, rest:binary>> -> decode_binary(rest, length)
+    <<0xc5, length:16, rest:binary>> -> decode_binary(rest, length)
+    <<0xc6, length:32, rest:binary>> -> decode_binary(rest, length)
 
     // fixstr
-    <<0b101:3, len:5, rest:binary>> -> decode_string(rest, len)
+    <<0b101:3, length:5, rest:binary>> -> decode_string(rest, length)
 
     // str
-    <<0xd9, len:8, rest:binary>> -> decode_string(rest, len)
-    <<0xda, len:16, rest:binary>> -> decode_string(rest, len)
-    <<0xdb, len:32, rest:binary>> -> decode_string(rest, len)
+    <<0xd9, length:8, rest:binary>> -> decode_string(rest, length)
+    <<0xda, length:16, rest:binary>> -> decode_string(rest, length)
+    <<0xdb, length:32, rest:binary>> -> decode_string(rest, length)
 
     // fixarr
     <<0b1001:4, count:4, rest:binary>> -> decode_array(rest, count)
@@ -78,60 +113,65 @@ pub fn decode(data: BitString) -> List(PackedValue) {
     <<0xd8, rest:binary>> -> decode_ext(rest, 128)
 
     // ext
-    <<0xc7, len:8, rest:binary>> -> decode_ext(rest, len)
-    <<0xc8, len:16, rest:binary>> -> decode_ext(rest, len)
-    <<0xc9, len:32, rest:binary>> -> decode_ext(rest, len)
+    <<0xc7, length:8, rest:binary>> -> decode_ext(rest, length)
+    <<0xc8, length:16, rest:binary>> -> decode_ext(rest, length)
+    <<0xc9, length:32, rest:binary>> -> decode_ext(rest, length)
+
+    _ -> Error(BadSegmentHeader)
   }
 }
 
-fn decode_int(data: BitString, length: Int) -> List(PackedValue) {
+fn decode_int(data: BitString, length: Int) -> DecodeResult {
   let <<value:signed-size(length), rest:binary>> = data
-  [PackedInt(value), ..decode(rest)]
+  try rest = decode(rest)
+  Ok([PackedInt(value), ..rest])
 }
 
-fn decode_uint(data: BitString, length: Int) -> List(PackedValue) {
+fn decode_uint(data: BitString, length: Int) -> DecodeResult {
   let <<value:size(length), rest:binary>> = data
-  [PackedInt(value), ..decode(rest)]
+  try rest = decode(rest)
+  Ok([PackedInt(value), ..rest])
 }
 
-fn decode_string(data: BitString, length: Int) -> List(PackedValue) {
+fn decode_string(data: BitString, length: Int) -> DecodeResult {
   let <<value:binary-size(length), rest:binary>> = data
-  assert Ok(value) = bit_string.to_string(value)
+  try rest = decode(rest)
 
-  [PackedString(value), ..decode(rest)]
+  case bit_string.to_string(value) {
+    Ok(str) -> Ok([PackedString(str), ..rest])
+    Error(e) -> Error(BadSegmentContents)
+  }
 }
 
-fn decode_binary(data: BitString, length: Int) -> List(PackedValue) {
+fn decode_binary(data: BitString, length: Int) -> DecodeResult {
   let <<value:binary-size(length), rest:binary>> = data
-  [PackedBinary(value), ..decode(rest)]
+  try rest = decode(rest)
+  Ok([PackedBinary(value), ..rest])
 }
 
-fn decode_array(data: BitString, count: Int) -> List(PackedValue) {
-  let #(values, rest) = decode_count(data, count)
-  [PackedArray(values), ..rest]
+fn decode_array(data: BitString, count: Int) -> DecodeResult {
+  try rest = decode(data)
+  let #(values, rest) = list.split(rest, count)
+  Ok([PackedArray(values), ..rest])
 }
 
-fn decode_map(data: BitString, count: Int) -> List(PackedValue) {
-  let #(values, rest) = decode_count(data, count * count)
-  let entries =
-    values
-    |> list.sized_chunk(into: 2)
-    |> list.map(fn(e) {
-      let [k, v] = e
-      #(k, v)
-    })
-  [PackedMap(entries), ..rest]
+fn decode_map(data: BitString, count: Int) -> DecodeResult {
+  try rest = decode(data)
+  let #(values, rest) = list.split(rest, count * count)
+  Ok([PackedMap(chunk_map_entries(values)), ..rest])
 }
 
-fn decode_ext(data: BitString, length: Int) -> List(PackedValue) {
+fn chunk_map_entries(values: List(PackedValue)) -> List(PackedMapEntry) {
+  values
+  |> list.sized_chunk(into: 2)
+  |> list.map(fn(e) {
+    let [k, v] = e
+    #(k, v)
+  })
+}
+
+fn decode_ext(data: BitString, length: Int) -> DecodeResult {
   let <<ext_type:signed-8, ext_data:binary-size(length), rest:binary>> = data
-  [PackedExt(ext_type, ext_data), ..decode(rest)]
-}
-
-fn decode_count(
-  data: BitString,
-  count: Int,
-) -> #(List(PackedValue), List(PackedValue)) {
-  decode(data)
-  |> list.split(count)
+  try rest = decode(rest)
+  Ok([PackedExt(ext_type, ext_data), ..rest])
 }
