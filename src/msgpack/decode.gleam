@@ -117,7 +117,14 @@ fn decode_array(data: BitString, count: Int) -> List(PackedValue) {
 
 fn decode_map(data: BitString, count: Int) -> List(PackedValue) {
   let #(values, rest) = decode_count(data, count * count)
-  [PackedMap(list.window_by_2(values)), ..rest]
+  let entries =
+    values
+    |> list.sized_chunk(into: 2)
+    |> list.map(fn(e) {
+      let [k, v] = e
+      #(k, v)
+    })
+  [PackedMap(entries), ..rest]
 }
 
 fn decode_ext(data: BitString, length: Int) -> List(PackedValue) {
@@ -129,5 +136,6 @@ fn decode_count(
   data: BitString,
   count: Int,
 ) -> #(List(PackedValue), List(PackedValue)) {
-  list.split(decode(data), count)
+  decode(data)
+  |> list.split(count)
 }
