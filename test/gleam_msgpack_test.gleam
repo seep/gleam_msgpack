@@ -330,7 +330,6 @@ pub fn decode_array_test() {
 
 pub fn decode_ext_test() {
   let ext_type = 1
-  let ext_data = <<0:8>>
 
   let fixture = fn(n) { bit_string.concat(list.repeat(<<0:8>>, n)) }
 
