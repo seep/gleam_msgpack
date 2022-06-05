@@ -6,9 +6,9 @@ pub const min_neg_fixint = -32
 
 pub const max_neg_fixint = -1
 
-pub const min_uint8 = 0
+pub const min_uint08 = 0
 
-pub const max_uint8 = 255
+pub const max_uint08 = 255
 
 pub const min_uint16 = 256
 
@@ -22,9 +22,9 @@ pub const min_uint64 = 4294967296
 
 pub const max_uint64 = 18446744073709551615
 
-pub const min_int8 = -128
+pub const min_int08 = -128
 
-pub const max_int8 = 127
+pub const max_int08 = 127
 
 pub const min_int16 = -32768
 
@@ -42,9 +42,9 @@ pub const min_fixstr_len = 0
 
 pub const max_fixstr_len = 31
 
-pub const min_str8_len = 32
+pub const min_str08_len = 32
 
-pub const max_str8_len = 255
+pub const max_str08_len = 255
 
 pub const min_str16_len = 256
 
@@ -54,9 +54,9 @@ pub const min_str32_len = 65536
 
 pub const max_str32_len = 4294967295
 
-pub const min_bin8_len = 0
+pub const min_bin08_len = 0
 
-pub const max_bin8_len = 255
+pub const max_bin08_len = 255
 
 pub const min_bin16_len = 256
 

@@ -52,16 +52,16 @@ pub fn decode(data: BitString) -> DecodeResult {
     }
 
     // uint
-    <<0xcc, rest:binary>> -> decode_uint(rest, 8)
-    <<0xcd, rest:binary>> -> decode_uint(rest, 16)
-    <<0xce, rest:binary>> -> decode_uint(rest, 32)
-    <<0xcf, rest:binary>> -> decode_uint(rest, 64)
+    <<0xcc, rest:binary>> -> decode_uint(rest, 1)
+    <<0xcd, rest:binary>> -> decode_uint(rest, 2)
+    <<0xce, rest:binary>> -> decode_uint(rest, 4)
+    <<0xcf, rest:binary>> -> decode_uint(rest, 8)
 
     // int
-    <<0xd0, rest:binary>> -> decode_int(rest, 8)
-    <<0xd1, rest:binary>> -> decode_int(rest, 16)
-    <<0xd2, rest:binary>> -> decode_int(rest, 32)
-    <<0xd3, rest:binary>> -> decode_int(rest, 64)
+    <<0xd0, rest:binary>> -> decode_int(rest, 1)
+    <<0xd1, rest:binary>> -> decode_int(rest, 2)
+    <<0xd2, rest:binary>> -> decode_int(rest, 4)
+    <<0xd3, rest:binary>> -> decode_int(rest, 8)
 
     // float
     <<0xca, _n:32, rest:binary>> -> {
@@ -76,7 +76,7 @@ pub fn decode(data: BitString) -> DecodeResult {
     }
 
     // bin
-    <<0xc4, length:8, rest:binary>> -> decode_binary(rest, length)
+    <<0xc4, length:08, rest:binary>> -> decode_binary(rest, length)
     <<0xc5, length:16, rest:binary>> -> decode_binary(rest, length)
     <<0xc6, length:32, rest:binary>> -> decode_binary(rest, length)
 
@@ -84,7 +84,7 @@ pub fn decode(data: BitString) -> DecodeResult {
     <<0b101:3, length:5, rest:binary>> -> decode_string(rest, length)
 
     // str
-    <<0xd9, length:8, rest:binary>> -> decode_string(rest, length)
+    <<0xd9, length:08, rest:binary>> -> decode_string(rest, length)
     <<0xda, length:16, rest:binary>> -> decode_string(rest, length)
     <<0xdb, length:32, rest:binary>> -> decode_string(rest, length)
 
@@ -103,35 +103,38 @@ pub fn decode(data: BitString) -> DecodeResult {
     <<0xdf, count:32, rest:binary>> -> decode_map(rest, count)
 
     // fixext
-    <<0xd4, rest:binary>> -> decode_ext(rest, 8)
-    <<0xd5, rest:binary>> -> decode_ext(rest, 16)
-    <<0xd6, rest:binary>> -> decode_ext(rest, 32)
-    <<0xd7, rest:binary>> -> decode_ext(rest, 64)
-    <<0xd8, rest:binary>> -> decode_ext(rest, 128)
+    <<0xd4, rest:binary>> -> decode_ext(rest, 1)
+    <<0xd5, rest:binary>> -> decode_ext(rest, 2)
+    <<0xd6, rest:binary>> -> decode_ext(rest, 4)
+    <<0xd7, rest:binary>> -> decode_ext(rest, 8)
+    <<0xd8, rest:binary>> -> decode_ext(rest, 16)
 
     // ext
-    <<0xc7, length:8, rest:binary>> -> decode_ext(rest, length)
-    <<0xc8, length:16, rest:binary>> -> decode_ext(rest, length)
-    <<0xc9, length:32, rest:binary>> -> decode_ext(rest, length)
+    <<0xc7, length:08, rest:bit_string>> -> decode_ext(rest, length)
+    <<0xc8, length:16, rest:bit_string>> -> decode_ext(rest, length)
+    <<0xc9, length:32, rest:bit_string>> -> decode_ext(rest, length)
 
     _ -> Error(BadSegmentHeader)
   }
 }
 
 fn decode_int(data: BitString, length: Int) -> DecodeResult {
-  let <<value:signed-size(length), rest:binary>> = data
+  let bits = length * 8
+  let <<value:size(bits)-signed, rest:bit_string>> = data
   try rest = decode(rest)
   Ok([PackedInt(value), ..rest])
 }
 
 fn decode_uint(data: BitString, length: Int) -> DecodeResult {
-  let <<value:size(length), rest:binary>> = data
+  let bits = length * 8
+  let <<value:size(bits)-unsigned, rest:bit_string>> = data
   try rest = decode(rest)
   Ok([PackedInt(value), ..rest])
 }
 
 fn decode_string(data: BitString, length: Int) -> DecodeResult {
-  let <<value:binary-size(length), rest:binary>> = data
+  let bits = length * 8
+  let <<value:size(bits)-bit_string, rest:bit_string>> = data
   try rest = decode(rest)
 
   case bit_string.to_string(value) {
@@ -141,7 +144,8 @@ fn decode_string(data: BitString, length: Int) -> DecodeResult {
 }
 
 fn decode_binary(data: BitString, length: Int) -> DecodeResult {
-  let <<value:binary-size(length), rest:binary>> = data
+  let bits = length * 8
+  let <<value:size(bits)-bit_string, rest:binary>> = data
   try rest = decode(rest)
   Ok([PackedBinary(value), ..rest])
 }
@@ -168,7 +172,8 @@ fn chunk_map_entries(values: List(PackedValue)) -> List(PackedMapEntry) {
 }
 
 fn decode_ext(data: BitString, length: Int) -> DecodeResult {
-  let <<ext_type:signed-8, ext_data:binary-size(length), rest:binary>> = data
+  let bits = length * 8
+  let <<ext_type:8-signed, ext_data:size(bits)-bit_string, rest:binary>> = data
   try rest = decode(rest)
   Ok([PackedExt(ext_type, ext_data), ..rest])
 }

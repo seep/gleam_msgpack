@@ -6,10 +6,10 @@ import gleam/bit_builder.{BitBuilder}
 import msgpack/types.{
   PackedArray, PackedBinary, PackedBool, PackedExt, PackedFloat, PackedInt, PackedMap,
   PackedMapEntry, PackedNil, PackedString, PackedValue, max_arr16_len, max_arr32_len,
-  max_fixarr_len, max_fixmap_len, max_fixstr_len, max_int16, max_int32, max_int64,
-  max_int8, max_map16_len, max_map32_len, max_pos_fixint, max_str16_len, max_str32_len,
-  max_str8_len, max_uint16, max_uint32, max_uint64, max_uint8, min_int16, min_int32,
-  min_int64, min_int8, min_neg_fixint,
+  max_fixarr_len, max_fixmap_len, max_fixstr_len, max_int08, max_int16, max_int32,
+  max_int64, max_map16_len, max_map32_len, max_pos_fixint, max_str08_len, max_str16_len,
+  max_str32_len, max_uint08, max_uint16, max_uint32, max_uint64, min_int08, min_int16,
+  min_int32, min_int64, min_neg_fixint,
 }
 
 pub fn encode(values: List(PackedValue)) -> BitString {
@@ -84,13 +84,13 @@ fn encode_int(value: Int) -> BitString {
     n if n < 0 && n >= min_neg_fixint -> <<111:3, int.negate(n):5>>
 
     // uints
-    n if n >= 0 && n <= max_uint8 -> <<0xcc, n:8>>
+    n if n >= 0 && n <= max_uint08 -> <<0xcc, n:08>>
     n if n >= 0 && n <= max_uint16 -> <<0xcd, n:16>>
     n if n >= 0 && n <= max_uint32 -> <<0xce, n:32>>
     n if n >= 0 && n <= max_uint64 -> <<0xcf, n:64>>
 
     // ints
-    n if n >= min_int8 && n <= max_int8 -> <<0xd0, n:8>>
+    n if n >= min_int08 && n <= max_int08 -> <<0xd0, n:08>>
     n if n >= min_int16 && n <= max_int16 -> <<0xd1, n:16>>
     n if n >= min_int32 && n <= max_int32 -> <<0xd2, n:32>>
     n if n >= min_int64 && n <= max_int64 -> <<0xd3, n:64>>
@@ -105,7 +105,7 @@ fn encode_float(value: Float) -> BitString {
 fn encode_string_prefix(value: String) -> BitString {
   case string.length(value) {
     len if len <= max_fixstr_len -> <<0b101:3, len:5>>
-    len if len <= max_str8_len -> <<0xd9, len:8>>
+    len if len <= max_str08_len -> <<0xd9, len:08>>
     len if len <= max_str16_len -> <<0xda, len:16>>
     len if len <= max_str32_len -> <<0xdb, len:32>>
   }
@@ -113,7 +113,7 @@ fn encode_string_prefix(value: String) -> BitString {
 
 fn encode_binary_prefix(value: BitString) -> BitString {
   case bit_string.byte_size(value) {
-    len if len <= max_uint8 -> <<0xd9, len:8>>
+    len if len <= max_uint08 -> <<0xd9, len:08>>
     len if len <= max_uint16 -> <<0xda, len:16>>
     len if len <= max_uint32 -> <<0xdb, len:32>>
   }
@@ -142,7 +142,7 @@ fn encode_ext_prefix(ext_type: Int, ext_data: BitString) -> BitString {
     4 -> <<0xd6, ext_type:8>>
     8 -> <<0xd7, ext_type:8>>
     16 -> <<0xd8, ext_type:8>>
-    len if len < max_uint8 -> <<0xc7, len:8, ext_type:8>>
+    len if len < max_uint08 -> <<0xc7, len:08, ext_type:8>>
     len if len < max_uint16 -> <<0xc8, len:16, ext_type:8>>
     len if len < max_uint32 -> <<0xc9, len:32, ext_type:8>>
   }
